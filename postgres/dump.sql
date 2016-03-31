@@ -9,7 +9,40 @@ SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
 SET search_path = public, pg_catalog;
+
+--
+-- Name: compose_session_replication_role(text); Type: FUNCTION; Schema: public; Owner: focker
+--
+
+CREATE FUNCTION compose_session_replication_role(role text) RETURNS text
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+        DECLARE
+                curr_val text := 'unset';
+        BEGIN
+                EXECUTE 'SET session_replication_role = ' || quote_literal(role);
+                EXECUTE 'SHOW session_replication_role' INTO curr_val;
+                RETURN curr_val;
+        END
+$$;
+
+
+ALTER FUNCTION public.compose_session_replication_role(role text) OWNER TO focker;
 
 SET default_tablespace = '';
 
@@ -42,21 +75,6 @@ CREATE TABLE rating_types (
 
 
 ALTER TABLE rating_types OWNER TO admin;
-
---
--- Data for Name: rating_types; Type: TABLE DATA; Schema: public; Owner: admin
---
-
-COPY rating_types (name, description) FROM stdin;
-\.
-
-
---
--- Name: rating_types_pkey; Type: CONSTRAINT; Schema: public; Owner: admin; Tablespace: 
---
-
-ALTER TABLE ONLY rating_types
-    ADD CONSTRAINT rating_types_pkey PRIMARY KEY (name);
 
 --
 -- Name: ratings; Type: TABLE; Schema: public; Owner: admin; Tablespace: 
@@ -99,6 +117,22 @@ CREATE TABLE sorts (
 
 
 ALTER TABLE sorts OWNER TO admin;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: admin; Tablespace: 
+--
+
+CREATE TABLE users (
+    email text NOT NULL,
+    pass text NOT NULL,
+    role name NOT NULL,
+    CONSTRAINT users_email_check CHECK ((email ~* '^.+@.+\..+$'::text)),
+    CONSTRAINT users_pass_check CHECK ((length(pass) < 256)),
+    CONSTRAINT users_role_check CHECK ((length((role)::text) < 256))
+);
+
+
+ALTER TABLE users OWNER TO admin;
 
 --
 -- Data for Name: artists; Type: TABLE DATA; Schema: public; Owner: admin
@@ -211,6 +245,14 @@ Roman GianArthur Irvin	bf93639c-1d7e-44ff-9331-91d871b6e14b	2030-12-31
 LANY	f1cc066a-6dd1-4b18-ae68-3708472ab4b1	2030-12-31
 Con Brio	7000122e-215c-4eac-85a4-d3b45a8bbaa5	2008-03-01
 Flux Capacitor	91a63f26-1674-43a9-95de-123eb453e36d	2030-12-31
+\.
+
+
+--
+-- Data for Name: rating_types; Type: TABLE DATA; Schema: public; Owner: admin
+--
+
+COPY rating_types (name, description) FROM stdin;
 \.
 
 
@@ -453,6 +495,14 @@ Zeds Dead	alphabetical	105
 
 
 --
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: admin
+--
+
+COPY users (email, pass, role) FROM stdin;
+\.
+
+
+--
 -- Name: artists_mb_id_key; Type: CONSTRAINT; Schema: public; Owner: admin; Tablespace: 
 --
 
@@ -469,6 +519,14 @@ ALTER TABLE ONLY artists
 
 
 --
+-- Name: rating_types_pkey; Type: CONSTRAINT; Schema: public; Owner: admin; Tablespace: 
+--
+
+ALTER TABLE ONLY rating_types
+    ADD CONSTRAINT rating_types_pkey PRIMARY KEY (name);
+
+
+--
 -- Name: ratings_pkey; Type: CONSTRAINT; Schema: public; Owner: admin; Tablespace: 
 --
 
@@ -482,6 +540,22 @@ ALTER TABLE ONLY ratings
 
 ALTER TABLE ONLY sort_types
     ADD CONSTRAINT sort_types_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: sorts_pkey; Type: CONSTRAINT; Schema: public; Owner: admin; Tablespace: 
+--
+
+ALTER TABLE ONLY sorts
+    ADD CONSTRAINT sorts_pkey PRIMARY KEY (artist_name, sort_type_name);
+
+
+--
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: admin; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (email);
 
 
 --
@@ -525,8 +599,23 @@ ALTER TABLE ONLY sorts
 
 
 --
--- Role for app
-CREATE ROLE music_lover LOGIN PASSWORD 'change_this';
+-- Name: public; Type: ACL; Schema: -; Owner: focker
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM focker;
+GRANT ALL ON SCHEMA public TO focker;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- Name: compose_session_replication_role(text); Type: ACL; Schema: public; Owner: focker
+--
+
+REVOKE ALL ON FUNCTION compose_session_replication_role(role text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION compose_session_replication_role(role text) FROM focker;
+GRANT ALL ON FUNCTION compose_session_replication_role(role text) TO focker;
+GRANT ALL ON FUNCTION compose_session_replication_role(role text) TO admin;
 
 
 --
@@ -536,7 +625,8 @@ CREATE ROLE music_lover LOGIN PASSWORD 'change_this';
 REVOKE ALL ON TABLE artists FROM PUBLIC;
 REVOKE ALL ON TABLE artists FROM admin;
 GRANT ALL ON TABLE artists TO admin;
-GRANT ALL ON TABLE artists TO music_lover;
+GRANT SELECT ON TABLE artists TO music_lover;
+
 
 --
 -- Name: rating_types; Type: ACL; Schema: public; Owner: admin
@@ -545,7 +635,8 @@ GRANT ALL ON TABLE artists TO music_lover;
 REVOKE ALL ON TABLE rating_types FROM PUBLIC;
 REVOKE ALL ON TABLE rating_types FROM admin;
 GRANT ALL ON TABLE rating_types TO admin;
-GRANT ALL ON TABLE rating_types TO music_lover;
+GRANT SELECT ON TABLE rating_types TO music_lover;
+
 
 --
 -- Name: ratings; Type: ACL; Schema: public; Owner: admin
@@ -554,7 +645,7 @@ GRANT ALL ON TABLE rating_types TO music_lover;
 REVOKE ALL ON TABLE ratings FROM PUBLIC;
 REVOKE ALL ON TABLE ratings FROM admin;
 GRANT ALL ON TABLE ratings TO admin;
-GRANT ALL ON TABLE ratings TO music_lover;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ratings TO music_lover;
 
 
 --
@@ -564,7 +655,7 @@ GRANT ALL ON TABLE ratings TO music_lover;
 REVOKE ALL ON TABLE sort_types FROM PUBLIC;
 REVOKE ALL ON TABLE sort_types FROM admin;
 GRANT ALL ON TABLE sort_types TO admin;
-GRANT ALL ON TABLE sort_types TO music_lover;
+GRANT SELECT ON TABLE sort_types TO music_lover;
 
 
 --
@@ -574,7 +665,17 @@ GRANT ALL ON TABLE sort_types TO music_lover;
 REVOKE ALL ON TABLE sorts FROM PUBLIC;
 REVOKE ALL ON TABLE sorts FROM admin;
 GRANT ALL ON TABLE sorts TO admin;
-GRANT ALL ON TABLE sorts TO music_lover;
+GRANT SELECT ON TABLE sorts TO music_lover;
+
+
+--
+-- Name: users; Type: ACL; Schema: public; Owner: admin
+--
+
+REVOKE ALL ON TABLE users FROM PUBLIC;
+REVOKE ALL ON TABLE users FROM admin;
+GRANT ALL ON TABLE users TO admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE users TO music_lover;
 
 
 --
