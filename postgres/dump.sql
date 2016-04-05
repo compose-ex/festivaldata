@@ -253,6 +253,7 @@ Flux Capacitor	91a63f26-1674-43a9-95de-123eb453e36d	2030-12-31
 --
 
 COPY rating_types (name, description) FROM stdin;
+hays_nps	on a scale of 0 to 10 would you recommend this artist to family or friends?  (This is the basic Net Promoter Score question)
 \.
 
 
@@ -261,6 +262,20 @@ COPY rating_types (name, description) FROM stdin;
 --
 
 COPY ratings (artist_name, email, rating_type_name, rating, at) FROM stdin;
+Pearl Jam	hays@compose.io	hays_nps	7	2016-04-05 14:24:58.304893+00
+Dead & Company (2 Sets)	hays@compose.io	hays_nps	9	2016-04-05 14:25:37.4813+00
+LCD Soundsystem	hays@compose.io	hays_nps	9	2016-04-05 14:26:19.095068+00
+Macklemore & Ryan Lewis	hays@compose.io	hays_nps	5	2016-04-05 14:27:18.509104+00
+Tame Impala (Late Night)	hays@compose.io	hays_nps	9	2016-04-05 14:27:53.739315+00
+Leon Bridges	hays@compose.io	hays_nps	9	2016-04-05 14:29:07.896479+00
+Grace Potter	hays@compose.io	hays_nps	7	2016-04-05 14:29:41.833981+00
+Father John Misty	hays@compose.io	hays_nps	9	2016-04-05 14:30:07.175291+00
+Lamb of God	hays@compose.io	hays_nps	9	2016-04-05 14:30:38.939218+00
+Two Door Cinema Club	hays@compose.io	hays_nps	6	2016-04-05 14:31:18.989772+00
+Tyler, the Creator	hays@compose.io	hays_nps	5	2016-04-05 14:32:22.964527+00
+Ellie Goulding	hays@compose.io	hays_nps	1	2016-04-05 15:08:02.37567+00
+J. Cole	hays@compose.io	hays_nps	6	2016-04-05 15:09:17.427562+00
+Death Cab for Cutie	hays@compose.io	hays_nps	8	2016-04-05 15:12:37.911284+00
 \.
 
 
@@ -499,6 +514,7 @@ Zeds Dead	alphabetical	105
 --
 
 COPY users (email, pass, role) FROM stdin;
+hays@compose.io	secret	music_lover
 \.
 
 
