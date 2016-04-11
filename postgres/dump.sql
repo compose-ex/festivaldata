@@ -10,45 +10,6 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 
 --
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
---
-
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
-
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
---
-
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
-
-SET search_path = public, pg_catalog;
-
---
--- Name: compose_session_replication_role(text); Type: FUNCTION; Schema: public; Owner: focker
---
-
-CREATE FUNCTION compose_session_replication_role(role text) RETURNS text
-    LANGUAGE plpgsql SECURITY DEFINER
-    AS $$
-        DECLARE
-                curr_val text := 'unset';
-        BEGIN
-                EXECUTE 'SET session_replication_role = ' || quote_literal(role);
-                EXECUTE 'SHOW session_replication_role' INTO curr_val;
-                RETURN curr_val;
-        END
-$$;
-
-
-ALTER FUNCTION public.compose_session_replication_role(role text) OWNER TO focker;
-
-SET default_tablespace = '';
-
-SET default_with_oids = false;
-
---
 -- Name: artists; Type: TABLE; Schema: public; Owner: admin; Tablespace: 
 --
 
@@ -615,24 +576,9 @@ ALTER TABLE ONLY sorts
 
 
 --
--- Name: public; Type: ACL; Schema: -; Owner: focker
---
+-- Added role here in case not running schema.sql
 
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM focker;
-GRANT ALL ON SCHEMA public TO focker;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
-
---
--- Name: compose_session_replication_role(text); Type: ACL; Schema: public; Owner: focker
---
-
-REVOKE ALL ON FUNCTION compose_session_replication_role(role text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION compose_session_replication_role(role text) FROM focker;
-GRANT ALL ON FUNCTION compose_session_replication_role(role text) TO focker;
-GRANT ALL ON FUNCTION compose_session_replication_role(role text) TO admin;
-
+CREATE ROLE music_lover;
 
 --
 -- Name: artists; Type: ACL; Schema: public; Owner: admin
